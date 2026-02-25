@@ -1,0 +1,431 @@
+/* ============================================================
+   DRAWING & EYE TRACKING STUDY — Styles
+   ============================================================
+   Design goals:
+   - Large touch targets for iPad use
+   - Clean, distraction-free drawing area
+   - Accessible color contrast
+   ============================================================ */
+
+/* --- CSS Variables (edit these to theme the app) --- */
+:root {
+  --color-bg: #f5f0eb;
+  --color-surface: #ffffff;
+  --color-text: #1a1a2e;
+  --color-text-muted: #6b7280;
+  --color-primary: #2a9d8f;
+  --color-primary-hover: #238a7e;
+  --color-success: #059669;
+  --color-danger: #dc2626;
+  --color-border: #d1d5db;
+  --color-canvas-bg: #ffffff;
+  --toolbar-height: 80px;
+  --topbar-height: 48px;
+  --radius: 10px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --font-body: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', monospace;
+}
+
+/* --- Reset & Base --- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden; /* prevent bounce scrolling on iPad */
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-user-select: none;
+  user-select: none;
+  /* Prevent pull-to-refresh and other gestures on iPad */
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+/* --- Screen Management --- */
+.screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+}
+.screen.active {
+  display: flex;
+}
+
+/* --- WELCOME SCREEN --- */
+.welcome-container {
+  margin: auto;
+  padding: 2rem;
+  max-width: 480px;
+  width: 100%;
+}
+.welcome-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+.welcome-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.subtitle {
+  color: var(--color-text-muted);
+  font-size: 1.05rem;
+  margin-top: 0.4rem;
+}
+.welcome-card {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 2rem;
+  box-shadow: var(--shadow);
+}
+.welcome-card h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+.setup-steps {
+  margin: 0 0 1.5rem 1.2rem;
+  line-height: 1.9;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+}
+.input-group {
+  margin-bottom: 1.5rem;
+}
+.input-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.input-group input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: var(--font-mono);
+}
+.input-group input:focus {
+  border-color: var(--color-primary);
+}
+.error-text {
+  color: var(--color-danger);
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+  min-height: 1.2em;
+}
+.helper-text {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+  text-align: center;
+}
+
+/* --- BUTTONS --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s, transform 0.1s;
+  /* Big enough for touch */
+  min-height: 48px;
+  min-width: 48px;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+  width: 100%;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+.btn-success {
+  background: var(--color-success);
+  color: white;
+}
+.btn-danger {
+  background: var(--color-danger);
+  color: white;
+}
+
+/* --- CALIBRATION SCREEN --- */
+.calibration-overlay {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--color-bg);
+}
+.calibration-msg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  background: var(--color-surface);
+  padding: 2.5rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  max-width: 400px;
+  z-index: 10;
+}
+.calibration-msg h2 {
+  margin-bottom: 0.75rem;
+}
+.calibration-msg p {
+  color: var(--color-text-muted);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+.calibration-dot {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  transition: background 0.2s, transform 0.2s;
+  z-index: 5;
+  /* Pulse animation to draw attention */
+  animation: pulse 1.5s ease-in-out infinite;
+}
+.calibration-dot:hover {
+  transform: translate(-50%, -50%) scale(1.2);
+}
+.calibration-dot.clicked {
+  background: var(--color-success);
+  animation: none;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(42, 157, 143, 0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(42, 157, 143, 0); }
+}
+
+/* --- DRAWING SCREEN --- */
+#screen-drawing {
+  flex-direction: column;
+}
+
+/* Top bar */
+.topbar {
+  height: var(--topbar-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+.trial-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+#trial-label {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.timer {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+}
+.trial-status {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+/* Canvas container */
+#canvas-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--color-canvas-bg);
+  /* Critical: allow touch drawing but prevent page scroll */
+  touch-action: none;
+}
+#drawing-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+/* Gaze indicator dot */
+.gaze-dot {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(230, 57, 70, 0.35);
+  border: 2px solid rgba(230, 57, 70, 0.6);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition: left 0.05s linear, top 0.05s linear;
+  z-index: 100;
+  display: none; /* hidden until tracking starts */
+}
+.gaze-dot.visible {
+  display: block;
+}
+
+/* --- TOOLBAR --- */
+.toolbar {
+  height: var(--toolbar-height);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 1rem;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.tool-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.tool-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-right: 0.3rem;
+}
+
+/* Tool buttons (pen, eraser, undo, clear) */
+.tool-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.tool-btn:hover {
+  border-color: var(--color-border);
+}
+.tool-btn.active {
+  border-color: var(--color-primary);
+  background: rgba(42, 157, 143, 0.1);
+  color: var(--color-primary);
+}
+
+/* Thickness buttons */
+.thickness-options {
+  display: flex;
+  gap: 0.3rem;
+}
+.thickness-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: var(--color-bg);
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.thickness-btn.active {
+  border-color: var(--color-primary);
+}
+.thickness-btn .dot {
+  display: block;
+  border-radius: 50%;
+  background: var(--color-text);
+}
+
+/* Color buttons */
+.color-options {
+  display: flex;
+  gap: 0.3rem;
+}
+.color-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.color-btn.active {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-primary);
+}
+
+/* Trial control buttons */
+.trial-controls {
+  margin-left: auto;
+  gap: 0.5rem;
+}
+
+/* --- DONE SCREEN --- */
+#summary-stats {
+  margin: 1rem 0 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: var(--color-text-muted);
+}
+#summary-stats strong {
+  color: var(--color-text);
+}
+
+/* --- Utility --- */
+@media (max-width: 768px) {
+  /* On smaller screens, reduce toolbar gaps */
+  .toolbar {
+    gap: 0.5rem;
+    padding: 0 0.5rem;
+  }
+  .tool-label {
+    display: none;
+  }
+}

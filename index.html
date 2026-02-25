@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Drawing &amp; Eye Tracking Study</title>
+
+  <!-- 
+    ============================================================
+    DRAWING & EYE TRACKING STUDY
+    ============================================================
+    A web-based drawing tool with integrated webcam eye tracking.
+    Designed for iPad + Apple Pencil usage in research settings.
+    
+    How it works:
+    1. Participant calibrates WebGazer (eye tracker)
+    2. Completes 3 drawing trials
+    3. Each trial records: strokes (with timestamps) + gaze data
+    4. All data is exported as JSON + PNG at the end
+    
+    See README.md for full documentation.
+    ============================================================
+  -->
+
+  <!-- WebGazer.js — webcam-based eye tracking library -->
+  <script src="https://webgazer.cs.brown.edu/webgazer.js" defer></script>
+
+  <!-- Our styles -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- ============================================================
+       SCREEN 1: WELCOME / SETUP
+       Shows before the study begins. Participant info + calibration.
+       ============================================================ -->
+  <div id="screen-welcome" class="screen active">
+    <div class="welcome-container">
+      <div class="welcome-header">
+        <h1>Drawing Study</h1>
+        <p class="subtitle">Eye Tracking &amp; Freehand Drawing</p>
+      </div>
+
+      <div class="welcome-card">
+        <h2>Before We Begin</h2>
+        <ol class="setup-steps">
+          <li>Enter a participant ID below</li>
+          <li>Allow camera access when prompted</li>
+          <li>Complete the eye tracking calibration</li>
+          <li>Complete 3 short drawing trials</li>
+        </ol>
+
+        <div class="input-group">
+          <label for="participant-id">Participant ID</label>
+          <input type="text" id="participant-id" placeholder="e.g., P001" autocomplete="off">
+        </div>
+
+        <button id="btn-start-calibration" class="btn btn-primary" disabled>
+          Start Calibration
+        </button>
+        <p id="welcome-error" class="error-text"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SCREEN 2: CALIBRATION
+       WebGazer calibration phase — click dots to calibrate gaze.
+       ============================================================ -->
+  <div id="screen-calibration" class="screen">
+    <div class="calibration-overlay">
+      <div id="calibration-instruction" class="calibration-msg">
+        <h2>Calibration</h2>
+        <p>Click each dot that appears. Try to look directly at the dot as you click it.</p>
+        <button id="btn-begin-calibration" class="btn btn-primary">Begin</button>
+      </div>
+      <!-- Calibration dots are injected dynamically by eyetracking.js -->
+      <div id="calibration-dots"></div>
+      <div id="calibration-complete" class="calibration-msg" style="display:none;">
+        <h2>Calibration Complete ✓</h2>
+        <p>Eye tracking is now active.</p>
+        <button id="btn-go-to-trials" class="btn btn-primary">Start Drawing Trials</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SCREEN 3: DRAWING TRIALS
+       The main drawing canvas + toolbar. Runs 3 trials sequentially.
+       ============================================================ -->
+  <div id="screen-drawing" class="screen">
+    <!-- Top bar: trial info -->
+    <div class="topbar">
+      <div class="trial-info">
+        <span id="trial-label">Trial 1 of 3</span>
+        <span id="trial-timer" class="timer">00:00</span>
+      </div>
+      <div class="trial-status" id="trial-status">
+        <!-- Status messages appear here -->
+      </div>
+    </div>
+
+    <!-- Drawing canvas — this is where strokes are rendered -->
+    <div id="canvas-container">
+      <canvas id="drawing-canvas"></canvas>
+      <!-- Gaze dot overlay (shows where the tracker thinks you're looking) -->
+      <div id="gaze-dot" class="gaze-dot"></div>
+    </div>
+
+    <!-- Bottom toolbar: drawing tools -->
+    <div class="toolbar">
+      <div class="tool-group">
+        <button id="tool-pen" class="tool-btn active" data-tool="pen" title="Pen">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 20h9"/>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+        </button>
+        <button id="tool-eraser" class="tool-btn" data-tool="eraser" title="Eraser">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 20H7L3 16l9-9 8 8-4 5z"/>
+            <path d="m6.5 13.5 5-5"/>
+          </svg>
+        </button>
+        <button id="tool-undo" class="tool-btn" data-tool="undo" title="Undo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="1 4 1 10 7 10"/>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+          </svg>
+        </button>
+        <button id="tool-clear" class="tool-btn" data-tool="clear" title="Clear Canvas">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Thickness selector -->
+      <div class="tool-group thickness-group">
+        <label class="tool-label">Size</label>
+        <div class="thickness-options">
+          <button class="thickness-btn" data-size="2" title="Fine">
+            <span class="dot" style="width:4px;height:4px;"></span>
+          </button>
+          <button class="thickness-btn active" data-size="4" title="Medium">
+            <span class="dot" style="width:8px;height:8px;"></span>
+          </button>
+          <button class="thickness-btn" data-size="8" title="Thick">
+            <span class="dot" style="width:14px;height:14px;"></span>
+          </button>
+          <button class="thickness-btn" data-size="14" title="Very Thick">
+            <span class="dot" style="width:20px;height:20px;"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Color picker -->
+      <div class="tool-group color-group">
+        <label class="tool-label">Color</label>
+        <div class="color-options">
+          <button class="color-btn active" data-color="#1a1a2e" title="Black" style="background:#1a1a2e;"></button>
+          <button class="color-btn" data-color="#e63946" title="Red" style="background:#e63946;"></button>
+          <button class="color-btn" data-color="#2a9d8f" title="Teal" style="background:#2a9d8f;"></button>
+          <button class="color-btn" data-color="#264653" title="Navy" style="background:#264653;"></button>
+          <button class="color-btn" data-color="#e9c46a" title="Gold" style="background:#e9c46a;"></button>
+        </div>
+      </div>
+
+      <!-- Trial controls -->
+      <div class="tool-group trial-controls">
+        <button id="btn-start-trial" class="btn btn-success">Start Trial</button>
+        <button id="btn-end-trial" class="btn btn-danger" disabled>End Trial</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SCREEN 4: EXPORT / DONE
+       Shows after all 3 trials. Download data button.
+       ============================================================ -->
+  <div id="screen-done" class="screen">
+    <div class="welcome-container">
+      <div class="welcome-header">
+        <h1>Study Complete</h1>
+        <p class="subtitle">Thank you for participating!</p>
+      </div>
+      <div class="welcome-card">
+        <h2>Data Summary</h2>
+        <div id="summary-stats">
+          <!-- Populated dynamically -->
+        </div>
+        <button id="btn-download" class="btn btn-primary">Download All Data</button>
+        <p class="helper-text">Downloads a ZIP file with JSON data + PNG images for each trial.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       JAVASCRIPT MODULES
+       Loaded as ES modules so we get clean imports/exports.
+       ============================================================ -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
