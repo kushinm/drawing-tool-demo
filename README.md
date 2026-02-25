@@ -1,6 +1,8 @@
-# Drawing & Eye Tracking Study
+# Sandboxing Drawing tool!
 
-A web-based drawing tool with integrated webcam eye tracking, designed for cognitive science research. Participants complete drawing trials using a stylus (Apple Pencil) while their eye gaze is tracked via the device's front-facing camera.
+What we're trying here --
+A web-based drawing tool with integrated webcam eye tracking. 
+Participants complete drawing trials using a stylus (Apple Pencil) while their eye gaze is tracked via the device's front-facing camera.
 
 ## Quick Start
 
@@ -8,7 +10,7 @@ A web-based drawing tool with integrated webcam eye tracking, designed for cogni
 
 1. Push this repo to GitHub
 2. Go to **Settings → Pages → Source → Deploy from branch** (main, root)
-3. Access at `https://yourusername.github.io/your-repo-name/`
+3. Access at `https://kushinm.github.io/drawing-tool-demo/`
 4. Open on your iPad's Safari browser
 
 ### Option 2: Local Development
@@ -28,7 +30,7 @@ npx serve .
 Then open `http://localhost:8000` in your browser.
 
 > **Important:** The app must be served over HTTPS (or localhost) for camera access to work. GitHub Pages provides HTTPS automatically.
-
+I recommend just doing the github pages version for now!
 ---
 
 ## How It Works
@@ -36,13 +38,13 @@ Then open `http://localhost:8000` in your browser.
 ### Study Flow
 
 ```
-Welcome Screen → Calibration → Trial 1 → Trial 2 → Trial 3 → Export Data
+Welcome Screen → Calibration → Trials →Data Export
 ```
 
 1. **Welcome**: Participant enters their ID
 2. **Calibration**: 9-point eye tracking calibration (click dots while looking at them)
 3. **Drawing Trials**: 3 trials, each with explicit Start/End buttons
-4. **Export**: Download JSON data + PNG images
+4. **Export**: Download JSON data + PNG images (we can hook up a DB later)
 
 ### What Gets Recorded
 
