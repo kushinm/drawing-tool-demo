@@ -1,17 +1,15 @@
 /* ============================================================
-   exporter.js — Data Export Utilities
+   exporter.js — Data Export as Single ZIP
    ============================================================
-   Handles exporting study data:
-   - JSON file with all stroke + gaze data
-   - PNG images for each trial's final drawing
+   Uses JSZip (loaded via <script> tag in index.html) to bundle
+   all study data into one downloadable .zip file.
    
-   We avoid external dependencies (like JSZip) to keep things
-   simple. Instead, we trigger multiple downloads or use a 
-   single combined JSON file.
-   
-   EXPORTED FILE FORMAT:
-   {participantId}_{date}_data.json — Full session data
-   {participantId}_{date}_trial{N}.png — Drawing image per trial
+   ZIP CONTENTS:
+     {participantId}_{date}/
+       data.json              — Full session data (strokes + gaze)
+       trial1.png             — Drawing image for trial 1
+       trial2.png             — Drawing image for trial 2
+       trial3.png             — Drawing image for trial 3
    ============================================================ */
 
 export class Exporter {
@@ -23,56 +21,52 @@ export class Exporter {
   }
 
   /* ----------------------------------------------------------
-     MAIN EXPORT FUNCTION
-     Downloads the JSON data file and all trial PNGs.
+     MAIN EXPORT — Single ZIP download
      ---------------------------------------------------------- */
 
   /**
-   * Export all data. Call this at the end of the study.
+   * Export all data as a single .zip file.
    * @param {string[]} trialPNGs - Array of data URLs for each trial's canvas PNG
    */
   async exportAll(trialPNGs) {
     const prefix = this.dataStore.getFilenamePrefix();
     const sessionData = this.dataStore.getSessionData();
 
-    // 1. Download the main JSON data file
-    this._downloadJSON(sessionData, `${prefix}_data.json`);
-
-    // 2. Download each trial's PNG with a short delay between downloads
-    //    (browsers may block rapid multiple downloads)
-    for (let i = 0; i < trialPNGs.length; i++) {
-      await this._delay(300);
-      this._downloadDataURL(trialPNGs[i], `${prefix}_trial${i + 1}.png`);
+    // Check JSZip is loaded
+    if (typeof JSZip === 'undefined') {
+      console.error('JSZip not loaded! Falling back to individual downloads.');
+      this._fallbackExport(sessionData, trialPNGs, prefix);
+      return;
     }
+
+    const zip = new JSZip();
+
+    // Create a folder inside the zip
+    const folder = zip.folder(prefix);
+
+    // Add the JSON data file
+    const jsonStr = JSON.stringify(sessionData, null, 2);
+    folder.file('data.json', jsonStr);
+
+    // Add each trial's PNG
+    for (let i = 0; i < trialPNGs.length; i++) {
+      // trialPNGs[i] is a data URL like "data:image/png;base64,iVBOR..."
+      // We need just the base64 part after the comma
+      const base64Data = trialPNGs[i].split(',')[1];
+      folder.file(`trial${i + 1}.png`, base64Data, { base64: true });
+    }
+
+    // Generate the zip and trigger download
+    const blob = await zip.generateAsync({ type: 'blob' });
+    this._downloadBlob(blob, `${prefix}.zip`);
   }
 
   /* ----------------------------------------------------------
-     DOWNLOAD HELPERS
+     DOWNLOAD HELPER
      ---------------------------------------------------------- */
 
   /**
-   * Download an object as a JSON file.
-   */
-  _downloadJSON(data, filename) {
-    const jsonStr = JSON.stringify(data, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    this._downloadBlob(blob, filename);
-  }
-
-  /**
-   * Download a data URL (like a PNG from canvas.toDataURL).
-   */
-  _downloadDataURL(dataURL, filename) {
-    const link = document.createElement('a');
-    link.href = dataURL;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-
-  /**
-   * Download a Blob as a file.
+   * Trigger a browser download for a Blob.
    */
   _downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
@@ -85,10 +79,26 @@ export class Exporter {
     URL.revokeObjectURL(url);
   }
 
-  /**
-   * Simple delay helper.
-   */
-  _delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  /* ----------------------------------------------------------
+     FALLBACK — If JSZip fails to load, download files individually
+     ---------------------------------------------------------- */
+
+  _fallbackExport(sessionData, trialPNGs, prefix) {
+    // Download JSON
+    const jsonStr = JSON.stringify(sessionData, null, 2);
+    const jsonBlob = new Blob([jsonStr], { type: 'application/json' });
+    this._downloadBlob(jsonBlob, `${prefix}_data.json`);
+
+    // Download PNGs with short delays (browsers block rapid downloads)
+    trialPNGs.forEach((dataURL, i) => {
+      setTimeout(() => {
+        const link = document.createElement('a');
+        link.href = dataURL;
+        link.download = `${prefix}_trial${i + 1}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }, (i + 1) * 400);
+    });
   }
 }
