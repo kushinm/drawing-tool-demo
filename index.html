@@ -22,8 +22,12 @@
     ============================================================
   -->
 
-  <!-- WebGazer.js — webcam-based eye tracking library -->
-  <script src="https://webgazer.cs.brown.edu/webgazer.js" defer></script>
+  <!-- 
+    WebGazer.js — webcam-based eye tracking library
+    Self-hosted (not CDN) so MediaPipe face_mesh files resolve correctly.
+    See lib/ folder for all required files.
+  -->
+  <script src="lib/webgazer.js" defer></script>
 
   <!-- Our styles -->
   <link rel="stylesheet" href="css/styles.css">

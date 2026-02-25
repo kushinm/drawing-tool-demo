@@ -272,13 +272,17 @@ function init() {
     elements.welcomeError.textContent = '';
 
     // Initialize WebGazer (requests camera)
-    elements.btnStartCalibration.textContent = 'Initializing camera...';
     elements.btnStartCalibration.disabled = true;
 
-    const success = await eyeTracker.initialize();
-    if (!success) {
-      elements.welcomeError.textContent = 
-        'Could not access the camera. Please allow camera access and try again.';
+    // Show status updates during initialization
+    const updateStatus = (msg) => {
+      elements.btnStartCalibration.textContent = msg;
+    };
+
+    const result = await eyeTracker.initialize(updateStatus);
+
+    if (!result.success) {
+      elements.welcomeError.textContent = result.error;
       elements.btnStartCalibration.textContent = 'Start Calibration';
       elements.btnStartCalibration.disabled = false;
       return;

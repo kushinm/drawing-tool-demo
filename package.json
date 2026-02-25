@@ -1,0 +1,15 @@
+{
+  "name": "drawing-eyetracking",
+  "version": "1.0.0",
+  "description": "A web-based drawing tool with integrated webcam eye tracking, designed for cognitive science research. Participants complete drawing trials using a stylus (Apple Pencil) while their eye gaze is tracked via the device's front-facing camera.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "webgazer": "^3.5.3"
+  }
+}
