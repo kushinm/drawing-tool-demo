@@ -61,6 +61,13 @@ export class DrawingEngine {
     const rect = this.canvas.parentElement.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
 
+    // Guard: if the parent is hidden (display:none), rect is 0×0.
+    // Skip setup — resize() will be called again once visible.
+    if (rect.width === 0 || rect.height === 0) {
+      console.warn('Canvas parent has zero size (screen probably hidden). Skipping setup.');
+      return;
+    }
+
     // Set the canvas buffer size (actual pixels)
     this.canvas.width = rect.width * dpr;
     this.canvas.height = rect.height * dpr;
@@ -87,10 +94,9 @@ export class DrawingEngine {
    * Call this if the window is resized (unlikely mid-trial, but safe).
    */
   resize() {
-    // Save current image data
-    const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+    // Re-measure parent and set up canvas at correct size.
+    // No need to save image data — we replay strokes from history.
     this._setupHiDPI();
-    // Replay all strokes instead of restoring image (cleaner)
     this._replayStrokes();
   }
 
